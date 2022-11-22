@@ -7,6 +7,7 @@ class PostAdmin(admin.ModelAdmin):
     list_display = (
         'pk',
         'text',
+        'pub_date',
         'author',
         'group',
     )

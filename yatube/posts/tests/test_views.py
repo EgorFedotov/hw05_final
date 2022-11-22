@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+from django.core.cache import cache
 
 from posts.models import Group, Post, Follow
 from posts.forms import PostForm
@@ -220,59 +221,75 @@ class CacheTests(TestCase):
         )
 
 
-class FollowTests(TestCase):
-    def setUp(self):
-        self.client_auth_follower = Client()
-        self.client_auth_following = Client()
-        self.user_follower = User.objects.create_user(username='follower')
-        self.user_following = User.objects.create_user(username='following')
-        self.post = Post.objects.create(
-            author=self.user_following,
-            text='Тестовая запись для тестирования ленты'
+class FollowViewsTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user_author = User.objects.create(
+            username='auth_author',
         )
-        self.client_auth_follower.force_login(self.user_follower)
-        self.client_auth_following.force_login(self.user_following)
+        cls.user_follow = User.objects.create(
+            username='auth_follow',
+        )
+        cls.post = Post.objects.create(
+            text='Тестовый текст',
+            author=cls.user_author,
+        )
+
+    def setUp(self):
+        cache.clear()
+        self.author_client = Client()
+        self.author_client.force_login(self.user_follow)
+        self.follow_client = Client()
+        self.follow_client.force_login(self.user_author)
 
     def test_follow(self):
         """Тест подписки"""
-        follow = reverse(
-            'posts:profile_follow', kwargs={
-                'username': self.user_following.username})
-        response = self.client_auth_follower.get(follow, follow=True)
+        follow_count = Follow.objects.count()
+        response = self.follow_client.get(
+            reverse(
+                'posts:profile_follow',
+                kwargs={'username': self.user_follow}
+            )
+        )
+        self.assertEqual(Follow.objects.count(), follow_count + 1)
         self.assertRedirects(
-            response, reverse('posts:profile', kwargs={
-                'username': self.user_following.username
-            })
+            response,
+            reverse(
+                'posts:profile',
+                kwargs={'username': self.user_follow}
+            )
         )
         self.assertTrue(
             Follow.objects.filter(
-                user=self.user_follower, author=self.user_following
+                user=self.user_author, author=self.user_follow
             ).exists()
         )
 
-    def test_unfollow(self):
-        """Тест отписки"""
-        unfollow = reverse(
-            'posts:profile_unfollow', kwargs={
-                'username': self.user_following.username
-            }
+    def test_posts_on_followers(self):
+        """Проверка оотписки."""
+        post = Post.objects.create(
+            author=self.user_author,
+            text="Тестовый текст"
         )
-        response = self.client_auth_follower.get(unfollow, follow=True)
+        Follow.objects.create(
+            user=self.user_follow,
+            author=self.user_author
+        )
+        response = self.author_client.get(
+            reverse('posts:follow_index')
+        )
+        post_object = response.context['page_obj']
+        self.assertIn(post, post_object)
 
-        self.assertRedirects(
-            response, reverse('posts:profile', kwargs={
-                'username': self.user_following.username
-            })
+    def test_posts_on_unfollowers(self):
+        """Проверка записей у тех кто не подписан на авторов."""
+        post = Post.objects.create(
+            author=self.user_author,
+            text="Тестовый текст"
         )
-        self.assertFalse(
-            Follow.objects.filter(
-                user=self.user_follower, author=self.user_following
-            ).exists()
+        response = self.author_client.get(
+            reverse('posts:follow_index')
         )
-
-    def test_follow_index_page_for_not_follower(self):
-        response = self.client_auth_following.get(reverse(
-            'posts:follow_index'))
-        self.assertNotIn(
-            self.post, response.context.get('page_obj')
-        )
+        post_object = response.context['page_obj']
+        self.assertNotIn(post, post_object)
