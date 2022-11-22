@@ -194,7 +194,7 @@ class CacheTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create(
-            username='tester',
+            username='tester_cashe',
         )
         cls.post = Post.objects.create(
             author=cls.user,
