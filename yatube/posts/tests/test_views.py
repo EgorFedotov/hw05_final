@@ -35,7 +35,7 @@ class URLTests(TestCase):
             content_type='image/gif'
         )
         cls.user = User.objects.create(
-            username='tester',
+            username='tester_views',
         )
         cls.group = Group.objects.create(
             title='Тестовая группа',
@@ -136,7 +136,7 @@ class PaginatorViewsTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.POSTS_OF_PAGE: int = 13
-        cls.user = User.objects.create_user(username='tester')
+        cls.user = User.objects.create_user(username='tester_paginator')
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug='test_slug',

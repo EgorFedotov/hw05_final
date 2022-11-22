@@ -13,7 +13,7 @@ class PostsEditURLTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create_user(username='tester')
+        cls.user = User.objects.create_user(username='tester_urls')
         cls.no_author_of_post = User.objects.create_user(
             username='no_author')
         cls.group = Group.objects.create(
