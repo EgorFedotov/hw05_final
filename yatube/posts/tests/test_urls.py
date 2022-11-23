@@ -17,9 +17,9 @@ class PostsEditURLTests(TestCase):
         cls.no_author_of_post = User.objects.create_user(
             username='no_author')
         cls.group = Group.objects.create(
-            title='Тестовая группа',
+            title='Test group',
             slug='test_slug',
-            description='Тестовое описание',
+            description='test description',
         )
         cls.post = Post.objects.create(
             author=cls.user,
