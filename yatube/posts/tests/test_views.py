@@ -1,4 +1,3 @@
-from math import ceil
 import shutil
 import tempfile
 
@@ -132,65 +131,60 @@ class URLTests(TestCase):
         self.assertNotIn(self.post.group, post_object)
 
 
-class PaginatorViewsTest(TestCase):
+class PostsPaginatorViewsTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.POSTS_OF_PAGE: int = 13
-        cls.user = User.objects.create_user(username='tester_paginator')
+        cls.user = User.objects.create(
+            username='auth',
+        )
         cls.group = Group.objects.create(
             title='Тестовая группа',
-            slug='tests_padginator',
-            description='test description',
+            description='Тестовое описание',
+            slug='test-slug',
         )
-        posts_list = []
-        for post_count in range(cls.POSTS_OF_PAGE):
-            posts_list.append(
+        cls.post = [
+            Post.objects.bulk_create([
                 Post(
-                    text=f'#{post_count} Тестовый текст .',
+                    text='Тестовый текст' + str(post_plus),
                     group=cls.group,
-                    author=cls.user
-                )
-            )
-        Post.objects.bulk_create(posts_list)
-        cls.pages_names = (
+                    author=cls.user,
+                ),
+            ])
+            for post_plus in range(settings.TOTAL_POSTS)
+        ]
+
+    def setUp(self):
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user)
+
+    def test_first_page_contains_ten_posts(self):
+        """10 постов на первой и 3 поста на второй странице шаблонов."""
+        test_pages = [
+            (settings.TEN_POST_PAGE, 1),
+            (settings.THREE_POST_PAGE, 2)
+        ]
+        pages_names = (
             reverse('posts:index'),
             reverse(
                 'posts:profile',
-                kwargs={'username': cls.user}),
+                kwargs={'username': self.user}
+            ),
             reverse(
                 'posts:group_list',
-                kwargs={'slug': cls.group.slug})
+                kwargs={'slug': self.group.slug}
+            )
         )
-
-    def setUp(self):
-        cache.clear()
-        self.guest_client = Client()
-
-    def test_first_page_contains_ten_posts(self):
-        """Тестирование первой страницы паджинатора"""
-        cache.clear()
-        for url in self.pages_names:
-            response = self.guest_client.get(url)
-            self.assertEqual(
-                len(response.context['page_obj']),
-                settings.COUNT
-            )
-
-    def test_last_page_contains_three_records(self):
-        '''Паджинатор переносит остальные записи на след стр'''
-        page_number = ceil(self.POSTS_OF_PAGE / settings.COUNT)
-        for url in self.pages_names:
-            response = self.guest_client.get(
-                url + '?page=' + str(page_number)
-            )
-            cache.clear()
-            self.assertEqual(
-                len(response.context['page_obj']),
-                (self.POSTS_OF_PAGE - (
-                    page_number - 1
-                ) * settings.COUNT)
-            )
+        for posts_on_page, page_nubmer in test_pages:
+            for page in pages_names:
+                with self.subTest(page=page):
+                    response = self.authorized_client.get(
+                        page + '?page=' + str(page_nubmer)
+                    )
+                    self.assertEqual(
+                        len(response.context['page_obj']),
+                        posts_on_page
+                    )
 
 
 class CacheTests(TestCase):
