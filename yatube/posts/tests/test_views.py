@@ -139,7 +139,7 @@ class PaginatorViewsTest(TestCase):
         cls.POSTS_OF_PAGE: int = 13
         cls.user = User.objects.create_user(username='tester_paginator')
         cls.group = Group.objects.create(
-            title='test group',
+            title='test title',
             slug='tests_padginator',
             description='test description',
         )
@@ -186,7 +186,7 @@ class PaginatorViewsTest(TestCase):
                 len(response.context['page_obj']),
                 (self.POSTS_OF_PAGE - (
                     page_number - 1
-                ) * settings.POST_OF_PAGE)
+                ) * settings.COUNT)
             )
 
 
