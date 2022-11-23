@@ -139,7 +139,7 @@ class PaginatorViewsTest(TestCase):
         cls.user = User.objects.create_user(username='tester_paginator')
         cls.group = Group.objects.create(
             title='Тестовая группа',
-            slug='test_slug',
+            slug='tester_slug',
             description='Тестовое описание',
         )
         cls.post = [
