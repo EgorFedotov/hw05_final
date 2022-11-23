@@ -136,15 +136,15 @@ class PaginatorViewsTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.POSTS_OF_PAGE: int = 13
-        cls.user = User.objects.create_user(username='tester_paginator')
+        cls.user = User.objects.create_user(username='HasNoName')
         cls.group = Group.objects.create(
-            title='Тестовая группа',
-            slug='tests_slug',
-            description='Тестовое описание',
+            title='test-group',
+            slug='test-group',
+            description='test description'
         )
+        cls.NUM_OF_POSTS = 13
         posts_list = []
-        for post_count in range(cls.POSTS_OF_PAGE):
+        for post_count in range(cls.NUM_OF_POSTS):
             posts_list.append(
                 Post(
                     text=f'#{post_count} Тестовый текст .',
@@ -153,22 +153,24 @@ class PaginatorViewsTest(TestCase):
                 )
             )
         Post.objects.bulk_create(posts_list)
-        cls.pages_names = (
-            reverse('posts:index'),
-            reverse(
-                'posts:profile',
-                kwargs={'username': cls.user}),
-            reverse(
-                'posts:group_list',
-                kwargs={'slug': cls.group.slug})
-        )
 
     def setUp(self):
         self.guest_client = Client()
+        self.urls = (
+            reverse('posts:index'),
+            reverse(
+                'posts:group_list',
+                kwargs={'slug': self.group.slug}
+            ),
+            reverse(
+                'posts:profile',
+                kwargs={'username': self.user.username}
+            )
+        )
 
-    def test_first_page_contains_ten_posts(self):
-        """Тестирование первой страницы паджинатора"""
-        for url in self.pages_names:
+    def test_first_page_contains_ten_records(self):
+        '''Паджинатор содержит 10 записей на первой странице'''
+        for url in self.urls:
             response = self.guest_client.get(url)
             self.assertEqual(
                 len(response.context['page_obj']),
@@ -176,15 +178,15 @@ class PaginatorViewsTest(TestCase):
             )
 
     def test_last_page_contains_three_records(self):
-        '''Паджинатор переносит остальные записи на след стр'''
-        page_number = ceil(self.POSTS_OF_PAGE / settings.COUNT)
-        for url in self.pages_names:
+        '''Паджинатор содержит 3 записи на последней странице'''
+        page_number = ceil(self.NUM_OF_POSTS / settings.COUNT)
+        for url in self.urls:
             response = self.guest_client.get(
                 url + '?page=' + str(page_number)
             )
             self.assertEqual(
                 len(response.context['page_obj']),
-                (self.POSTS_OF_PAGE - (
+                (self.NUM_OF_POSTS - (
                     page_number - 1
                 ) * settings.COUNT)
             )
