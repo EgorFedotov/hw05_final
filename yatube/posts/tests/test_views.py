@@ -164,6 +164,7 @@ class PaginatorViewsTest(TestCase):
         )
 
     def setUp(self):
+        cache.clear()
         self.guest_client = Client()
 
     def test_first_page_contains_ten_posts(self):
