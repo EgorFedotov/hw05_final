@@ -186,7 +186,7 @@ class PaginatorViewsTest(TestCase):
                 len(response.context['page_obj']),
                 (self.POSTS_OF_PAGE - (
                     page_number - 1
-                ) * settings.COUNT)
+                ) * settings.POST_OF_PAGE)
             )
 
 
