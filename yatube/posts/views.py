@@ -5,6 +5,7 @@ from django.core.paginator import Paginator
 
 from .forms import PostForm, CommentForm
 from .models import Group, Post, User, Follow
+from django.views.decorators.cache import cache_page
 
 
 def get_paginator(post_list, page_number):
@@ -12,6 +13,7 @@ def get_paginator(post_list, page_number):
     return paginator.get_page(page_number)
 
 
+@cache_page(settings.CACHE_TIME, key_prefix='index_page')
 def index(request):
     post_list = Post.objects.select_related('author', 'group')
     context = {
