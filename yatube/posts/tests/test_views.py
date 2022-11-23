@@ -5,7 +5,7 @@ import tempfile
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, TestCase, override_settings
+from django.test import Client, TestCase
 from django.urls import reverse
 from django.core.cache import cache
 
@@ -16,11 +16,11 @@ User = get_user_model()
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
-@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class URLTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
         small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
             b'\x01\x00\x80\x00\x00\x00\x00\x00'
@@ -168,6 +168,7 @@ class PaginatorViewsTest(TestCase):
 
     def test_first_page_contains_ten_posts(self):
         """Тестирование первой страницы паджинатора"""
+        cache.clear()
         for url in self.pages_names:
             response = self.guest_client.get(url)
             self.assertEqual(
