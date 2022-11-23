@@ -164,7 +164,6 @@ class PaginatorViewsTest(TestCase):
         )
 
     def setUp(self):
-        cache.clear()
         self.guest_client = Client()
 
     def test_first_page_contains_ten_posts(self):
@@ -178,6 +177,7 @@ class PaginatorViewsTest(TestCase):
 
     def test_last_page_contains_three_records(self):
         '''Паджинатор переносит остальные записи на след стр'''
+        cache.clear()
         page_number = ceil(self.POSTS_OF_PAGE / settings.COUNT)
         for url in self.pages_names:
             response = self.guest_client.get(
