@@ -9,7 +9,7 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.core.cache import cache
 
-from posts.models import Group, Post, Follow
+from posts.models import Group, Post, Follow, User
 from posts.forms import PostForm
 
 User = get_user_model()
@@ -73,7 +73,8 @@ class URLTests(TestCase):
             reverse(
                 'posts:group_list', kwargs={'slug': self.group.slug}),
             reverse(
-                'posts:profile', kwargs={'username': self.user}),
+                'posts:profile', kwargs={'username': self.post.author.username}
+            ),
         ]
         for template in templates_pages_names:
             with self.subTest(template=template):
