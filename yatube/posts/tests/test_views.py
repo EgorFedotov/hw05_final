@@ -13,7 +13,6 @@ from posts.models import Group, Post, Follow, User
 from posts.forms import PostForm
 
 User = get_user_model()
-TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
 class URLTests(TestCase):
