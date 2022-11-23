@@ -270,7 +270,7 @@ class FollowViewsTest(TestCase):
         """Проверка оотписки."""
         post = Post.objects.create(
             author=self.user_author,
-            text="Тестовый текст"
+            text='Тестовый текст'
         )
         Follow.objects.create(
             user=self.user_follow,
@@ -286,7 +286,7 @@ class FollowViewsTest(TestCase):
         """Проверка записей у тех кто не подписан на авторов."""
         post = Post.objects.create(
             author=self.user_author,
-            text="Тестовый текст"
+            text='Тестовый текст'
         )
         response = self.author_client.get(
             reverse('posts:follow_index')
