@@ -1,3 +1,4 @@
+from math import ceil
 import shutil
 import tempfile
 
@@ -12,6 +13,7 @@ from posts.models import Group, Post, Follow, User
 from posts.forms import PostForm
 
 User = get_user_model()
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
 class URLTests(TestCase):
@@ -49,8 +51,7 @@ class URLTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        shutil.rmtree(settings.TEMP_MEDIA_ROOT, ignore_errors=True)
-        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
         self.guest_client = Client()
@@ -131,60 +132,64 @@ class URLTests(TestCase):
         self.assertNotIn(self.post.group, post_object)
 
 
-class PostsPaginatorViewsTests(TestCase):
+class PaginatorViewsTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create(
-            username='auth',
-        )
+        cls.POSTS_OF_PAGE: int = 13
+        cls.user = User.objects.create_user(username='tester_paginator')
         cls.group = Group.objects.create(
             title='Тестовая группа',
-            description='Тестовое описание',
-            slug='test-slug',
+            slug='tests_padginator',
+            description='test description',
         )
-        cls.post = [
-            Post.objects.bulk_create([
+        posts_list = []
+        for post_count in range(cls.POSTS_OF_PAGE):
+            posts_list.append(
                 Post(
-                    text='Тестовый текст' + str(post_plus),
+                    text=f'#{post_count} Тестовый текст .',
                     group=cls.group,
-                    author=cls.user,
-                ),
-            ])
-            for post_plus in range(settings.TOTAL_POSTS)
-        ]
-
-    def setUp(self):
-        self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
-
-    def test_first_page_contains_ten_posts(self):
-        """10 постов на первой и 3 поста на второй странице шаблонов."""
-        test_pages = [
-            (settings.TEN_POST_PAGE, 1),
-            (settings.THREE_POST_PAGE, 2)
-        ]
-        pages_names = (
+                    author=cls.user
+                )
+            )
+        Post.objects.bulk_create(posts_list)
+        cls.pages_names = (
             reverse('posts:index'),
             reverse(
                 'posts:profile',
-                kwargs={'username': self.user}
-            ),
+                kwargs={'username': cls.user}),
             reverse(
                 'posts:group_list',
-                kwargs={'slug': self.group.slug}
-            )
+                kwargs={'slug': cls.group.slug})
         )
-        for posts_on_page, page_nubmer in test_pages:
-            for page in pages_names:
-                with self.subTest(page=page):
-                    response = self.authorized_client.get(
-                        page + '?page=' + str(page_nubmer)
-                    )
-                    self.assertEqual(
-                        len(response.context['page_obj']),
-                        posts_on_page
-                    )
+
+    def setUp(self):
+        cache.clear()
+        self.guest_client = Client()
+
+    def test_first_page_contains_ten_posts(self):
+        """Тестирование первой страницы паджинатора"""
+        cache.clear()
+        for url in self.pages_names:
+            response = self.guest_client.get(url)
+            self.assertEqual(
+                len(response.context['page_obj']),
+                settings.COUNT
+            )
+
+    def test_last_page_contains_three_records(self):
+        '''Паджинатор переносит остальные записи на след стр'''
+        page_number = ceil(self.POSTS_OF_PAGE / settings.COUNT)
+        for url in self.pages_names:
+            response = self.guest_client.get(
+                url + '?page=' + str(page_number)
+            )
+            self.assertEqual(
+                len(response.context['page_obj']),
+                (self.POSTS_OF_PAGE - (
+                    page_number - 1
+                ) * settings.COUNT)
+            )
 
 
 class CacheTests(TestCase):
