@@ -53,10 +53,10 @@ class PostsURLTests(TestCase):
                 'posts:post_detail',
                 kwargs={'post_id': self.post.id}): 'posts/post_detail.html',
             reverse(
-                'posts:edit',
-                kwargs={'post_id': self.post.id}): 'posts/post_create.html',
+                'posts:post_edit',
+                kwargs={'post_id': self.post.id}): 'posts/create_post.html',
             reverse(
-                'posts:post_create'): 'posts/post_create.html',
+                'posts:post_create'): 'posts/create_post.html',
             reverse('posts:follow_index'): 'posts/follow.html',
         }
         for reverse_name, template in templates_url_names.items():
@@ -91,7 +91,7 @@ class PostsURLTests(TestCase):
         """Страницы, доступные авторизованным пользователям."""
         namespace_url_names = {
             reverse(
-                'posts:edit',
+                'posts:post_edit',
                 kwargs={'post_id': self.post.id}
             ),
             reverse('posts:post_create'),
@@ -103,13 +103,13 @@ class PostsURLTests(TestCase):
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_urls_create_list_redirect_guest_client(self):
-        """Шаблон create, edit и follow перенаправит анонимного
+        """Шаблон create, post_edit и follow перенаправит анонимного
         пользователя на страницу логина.
         """
         response_list = {
             reverse('posts:post_create'),
             reverse(
-                'posts:edit',
+                'posts:post_edit',
                 kwargs={'post_id': self.post.id}
             ),
             reverse(
@@ -133,7 +133,7 @@ class PostsURLTests(TestCase):
         """
         response = self.no_author.get(
             reverse(
-                'posts:edit',
+                'posts:post_edit',
                 kwargs={'post_id': self.post.id}
             ),
             follow=True
