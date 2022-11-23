@@ -174,7 +174,7 @@ class PaginatorViewsTest(TestCase):
             reverse('posts:index'),
             reverse(
                 'posts:profile',
-                kwargs={'username': cls.user}),
+                kwargs={'username': cls.user.username}),
             reverse(
                 'posts:group_list',
                 kwargs={'slug': cls.group.slug})
