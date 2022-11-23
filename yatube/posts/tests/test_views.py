@@ -125,7 +125,7 @@ class URLTests(TestCase):
         response = self.authorized_client.get(
             reverse(
                 'posts:group_list',
-                kwargs={'slug': 'test_slug'}
+                kwargs={'slug': self.group.slug}
             )
         )
         post_object = response.context['page_obj']
@@ -143,16 +143,16 @@ class PaginatorViewsTest(TestCase):
             slug='tests_slug',
             description='Тестовое описание',
         )
-        cls.post = [
-            Post.objects.bulk_create([
+        posts_list = []
+        for post_count in range(cls.POSTS_OF_PAGE):
+            posts_list.append(
                 Post(
-                    text='Тестовый текст' + str(post_plus),
+                    text=f'#{post_count} Тестовый текст .',
                     group=cls.group,
-                    author=cls.user,
-                ),
-            ])
-            for post_plus in range(cls.POSTS_OF_PAGE)
-        ]
+                    author=cls.user
+                )
+            )
+        Post.objects.bulk_create(posts_list)
         cls.pages_names = (
             reverse('posts:index'),
             reverse(
