@@ -131,6 +131,22 @@ class URLTests(TestCase):
         post_object = response.context['page_obj']
         self.assertNotIn(self.post.group, post_object)
 
+    def test_index_page_cache(self):
+        """Список записей в index хранится в кеше."""
+        response_first = self.authorized_client.get(
+            reverse('posts:index')
+        )
+        Post.objects.all().delete()
+        response_second = self.authorized_client.get(
+            reverse('posts:index')
+        )
+        self.assertEqual(
+            response_first.content,
+            response_second.content
+        )
+        cache.clear()
+        self.assertEqual(Post.objects.count(), settings.ZERO_POST)
+
 
 class PaginatorViewsTest(TestCase):
     @classmethod
@@ -169,7 +185,6 @@ class PaginatorViewsTest(TestCase):
 
     def test_first_page_contains_ten_posts(self):
         """Тестирование первой страницы паджинатора"""
-        cache.clear()
         for url in self.pages_names:
             response = self.guest_client.get(url)
             self.assertEqual(
@@ -190,38 +205,6 @@ class PaginatorViewsTest(TestCase):
                     page_number - 1
                 ) * settings.COUNT)
             )
-
-
-class CacheTests(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.user = User.objects.create(
-            username='tester_cashe',
-        )
-        cls.post = Post.objects.create(
-            author=cls.user,
-            text='Тестовый текст',
-        )
-
-    def setUp(self):
-        self.guest_client = Client()
-        self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
-
-    def test_cahe_index(self):
-        """Тест кэширования главной страницы"""
-        response_first = self.authorized_client.get(
-            reverse('posts:index')
-        )
-        Post.objects.all().delete()
-        response_second = self.authorized_client.get(
-            reverse('posts:index')
-        )
-        self.assertEqual(
-            response_first.content,
-            response_second.content
-        )
 
 
 class FollowViewsTest(TestCase):
