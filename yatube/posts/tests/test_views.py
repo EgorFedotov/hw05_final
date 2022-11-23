@@ -183,7 +183,7 @@ class PaginatorViewsTest(TestCase):
                 url + '?page=' + str(page_number)
             )
             self.assertEqual(
-                (len(response.context['page_obj']) - 2),
+                len(response.context['page_obj']),
                 (self.POSTS_OF_PAGE - (
                     page_number - 1
                 ) * settings.COUNT)
@@ -203,6 +203,7 @@ class CacheTests(TestCase):
         )
 
     def setUp(self):
+        cache.clear()
         self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
