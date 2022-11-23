@@ -179,12 +179,12 @@ class PaginatorViewsTest(TestCase):
 
     def test_last_page_contains_three_records(self):
         '''Паджинатор переносит остальные записи на след стр'''
-        cache.clear()
         page_number = ceil(self.POSTS_OF_PAGE / settings.COUNT)
         for url in self.pages_names:
             response = self.guest_client.get(
                 url + '?page=' + str(page_number)
             )
+            cache.clear()
             self.assertEqual(
                 len(response.context['page_obj']),
                 (self.POSTS_OF_PAGE - (
