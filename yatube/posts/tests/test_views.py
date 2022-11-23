@@ -40,7 +40,7 @@ class URLTests(TestCase):
         cls.group = Group.objects.create(
             title='Тестовая группа',
             description='Тестовое описание',
-            slug='test_slug',
+            slug='tester_slug',
         )
         cls.post = Post.objects.create(
             author=cls.user,
@@ -140,7 +140,7 @@ class PaginatorViewsTest(TestCase):
         cls.user = User.objects.create_user(username='tester_paginator')
         cls.group = Group.objects.create(
             title='Тестовая группа',
-            slug='tester_slug',
+            slug='tests_slug',
             description='Тестовое описание',
         )
         cls.post = [
