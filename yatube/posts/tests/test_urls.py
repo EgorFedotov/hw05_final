@@ -9,20 +9,20 @@ from posts.models import Group, Post
 User = get_user_model()
 
 
-class PostsEditURLTests(TestCase):
+class PostsURLTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(
-            username='tester_urls'
+            username='auth'
         )
-        cls.no_author_of_post = User.objects.create_user(
-            username='no_author'
+        cls.no_author_cl = User.objects.create_user(
+            username='auth_no_author'
         )
         cls.group = Group.objects.create(
             title='Тестовая группа',
             description='Тестовое описание',
-            slug='test_slug',
+            slug='test-slug',
         )
         cls.post = Post.objects.create(
             author=cls.user,
@@ -74,7 +74,7 @@ class PostsEditURLTests(TestCase):
         """Шаблон post_edit перенаправит не автора поста
         на страницу post_detail.
         """
-        self.authorized_client.force_login(self.no_author_of_post)
+        self.authorized_client.force_login(self.no_author_cl)
         response = self.authorized_client.get(
             reverse(
                 'posts:post_edit',
