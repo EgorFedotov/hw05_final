@@ -183,7 +183,7 @@ class PaginatorViewsTest(TestCase):
                 url + '?page=' + str(page_number)
             )
             self.assertEqual(
-                len(response.context['page_obj']),
+                (len(response.context['page_obj']) - 2),
                 (self.POSTS_OF_PAGE - (
                     page_number - 1
                 ) * settings.COUNT)
