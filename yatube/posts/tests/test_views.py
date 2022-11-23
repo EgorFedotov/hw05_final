@@ -139,7 +139,7 @@ class PaginatorViewsTest(TestCase):
         cls.POSTS_OF_PAGE: int = 13
         cls.user = User.objects.create_user(username='tester_paginator')
         cls.group = Group.objects.create(
-            title='test title',
+            title='Тестовая группа',
             slug='tests_padginator',
             description='test description',
         )
@@ -164,6 +164,7 @@ class PaginatorViewsTest(TestCase):
         )
 
     def setUp(self):
+        cache.clear()
         self.guest_client = Client()
 
     def test_first_page_contains_ten_posts(self):
@@ -203,7 +204,6 @@ class CacheTests(TestCase):
         )
 
     def setUp(self):
-        cache.clear()
         self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
