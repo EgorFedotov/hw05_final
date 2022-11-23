@@ -152,6 +152,7 @@ class PaginatorViewsTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
         cls.POSTS_OF_PAGE: int = 13
         cls.user = User.objects.create_user(username='tester_paginator')
         cls.group = Group.objects.create(
