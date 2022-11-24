@@ -1,11 +1,10 @@
-from math import ceil
 import shutil
 import tempfile
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.core.cache import cache
 
@@ -16,6 +15,7 @@ User = get_user_model()
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class URLTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -51,6 +51,7 @@ class URLTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        super().tearDownClass()
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
@@ -148,6 +149,7 @@ class URLTests(TestCase):
         self.assertEqual(Post.objects.count(), settings.ZERO_POST)
 
 
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PaginatorViewsTest(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -181,7 +183,6 @@ class PaginatorViewsTest(TestCase):
         )
 
     def setUp(self):
-        cache.clear()
         self.guest_client = Client()
 
     def test_first_page_contains_ten_posts(self):
@@ -191,20 +192,6 @@ class PaginatorViewsTest(TestCase):
             self.assertEqual(
                 len(response.context['page_obj']),
                 settings.COUNT
-            )
-
-    def test_last_page_contains_three_records(self):
-        '''Паджинатор переносит остальные записи на след стр'''
-        page_number = ceil(self.POSTS_OF_PAGE / settings.COUNT)
-        for url in self.pages_names:
-            response = self.guest_client.get(
-                url + '?page=' + str(page_number)
-            )
-            self.assertEqual(
-                len(response.context['page_obj']),
-                (self.POSTS_OF_PAGE - (
-                    page_number - 1
-                ) * settings.COUNT)
             )
 
 
