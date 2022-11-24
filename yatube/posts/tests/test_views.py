@@ -149,52 +149,6 @@ class URLTests(TestCase):
         self.assertEqual(Post.objects.count(), settings.ZERO_POST)
 
 
-@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
-class PaginatorViewsTest(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
-        cls.POSTS_OF_PAGE: int = 13
-        cls.user = User.objects.create_user(username='tester_paginator')
-        cls.group = Group.objects.create(
-            title='Тестовая группа',
-            slug='tests_padginator',
-            description='test description',
-        )
-        posts_list = []
-        for post_count in range(cls.POSTS_OF_PAGE):
-            posts_list.append(
-                Post(
-                    text=f'#{post_count} Тестовый текст .',
-                    group=cls.group,
-                    author=cls.user
-                )
-            )
-        Post.objects.bulk_create(posts_list)
-        cls.pages_names = (
-            reverse('posts:index'),
-            reverse(
-                'posts:profile',
-                kwargs={'username': cls.user.username}),
-            reverse(
-                'posts:group_list',
-                kwargs={'slug': cls.group.slug})
-        )
-
-    def setUp(self):
-        self.guest_client = Client()
-
-    def test_first_page_contains_ten_posts(self):
-        """Тестирование первой страницы паджинатора"""
-        for url in self.pages_names:
-            response = self.guest_client.get(url)
-            self.assertEqual(
-                len(response.context['page_obj']),
-                settings.COUNT
-            )
-
-
 class FollowViewsTest(TestCase):
     @classmethod
     def setUpClass(cls):
