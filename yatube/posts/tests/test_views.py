@@ -1,3 +1,4 @@
+# from math import ceil
 import shutil
 import tempfile
 
@@ -147,6 +148,66 @@ class URLTests(TestCase):
         )
         cache.clear()
         self.assertEqual(Post.objects.count(), settings.ZERO_POST)
+
+
+# Андрей помоги пожалуйста, ни как не могу разобраться с ошибкой
+
+# class PaginatorViewsTest(TestCase):
+#     @classmethod
+#     def setUpClass(cls):
+#         super().setUpClass()
+#         cls.POSTS_OF_PAGE: int = 13
+#         cls.user = User.objects.create_user(username='tester')
+#         cls.group = Group.objects.create(
+#             title='Тестовая группа',
+#             slug='test_slug',
+#             description='Тестовое описание',
+#         )
+#         cls.post = [
+#             Post.objects.bulk_create([
+#                 Post(
+#                     text='Тестовый текст' + str(post_plus),
+#                     group=cls.group,
+#                     author=cls.user,
+#                 ),
+#             ])
+#             for post_plus in range(cls.POSTS_OF_PAGE)
+#         ]
+#         cls.pages_names = (
+#             reverse('posts:index'),
+#             reverse(
+#                 'posts:profile',
+#                 kwargs={'username': cls.user}),
+#             reverse(
+#                 'posts:group_list',
+#                 kwargs={'slug': cls.group.slug})
+#         )
+
+#     def setUp(self):
+#         self.guest_client = Client()
+
+#     def test_first_page_contains_ten_posts(self):
+#         """Тестирование первой страницы паджинатора"""
+#         for url in self.pages_names:
+#             response = self.guest_client.get(url)
+#             self.assertEqual(
+#                 len(response.context['page_obj']),
+#                 settings.COUNT
+#             )
+
+#     def test_last_page_contains_three_records(self):
+#         '''Паджинатор переносит остальные записи на след стр'''
+#         page_number = ceil(self.POSTS_OF_PAGE / settings.COUNT)
+#         for url in self.pages_names:
+#             response = self.guest_client.get(
+#                 url + '?page=' + str(page_number)
+#             )
+#             self.assertEqual(
+#                 len(response.context['page_obj']),
+#                 (self.POSTS_OF_PAGE - (
+#                     page_number - 1
+#                 ) * settings.COUNT)
+#             )
 
 
 class FollowViewsTest(TestCase):
