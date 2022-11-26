@@ -13,9 +13,11 @@
   {% endthumbnail %}
   <p>{{ post.text|linebreaksbr }}</p>
   <ul>
+  {% if detail_link %}  
     <li>
       <a href="{% url 'posts:post_detail' post.id %}">подробная информация </a>
     </li>
+  {% endif %}
   {% if post.group and group_list_link %}
     <li>
       <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a>

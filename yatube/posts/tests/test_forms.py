@@ -1,13 +1,13 @@
 import shutil
 import tempfile
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from posts.models import Group, Post, Comment
-from django.conf import settings
-from django.core.files.uploadedfile import SimpleUploadedFile
+from posts.models import Comment, Group, Post
 
 User = get_user_model()
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
@@ -47,6 +47,7 @@ class PostFormTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        super().tearDownClass()
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
@@ -56,7 +57,7 @@ class PostFormTests(TestCase):
 
     def test_create_post(self):
         """Валидная форма создает запись в базе."""
-        post_count = Post.objects.count()
+        post_count = set(Post.objects.values_list('id', flat=True))
         form_data = {
             'text': 'Тестовый текст',
             'group': self.group.id,
@@ -67,11 +68,14 @@ class PostFormTests(TestCase):
             data=form_data,
             follow=True
         )
-        post = Post.objects.get(id=self.group.id)
         self.assertRedirects(response, reverse(
             'posts:profile', kwargs={'username': PostFormTests.user})
         )
-        self.assertEqual(Post.objects.count(), post_count + 1)
+        new_post_count = set(Post.objects.values_list('id', flat=True))
+        difference_value = new_post_count.difference(post_count)
+        self.assertEqual(len(difference_value), 1)
+        post = Post.objects.get(
+            id=difference_value.pop())
         self.assertEqual(form_data['text'], post.text)
         self.assertEqual(form_data['group'], post.group.id)
         self.assertEqual(form_data['image'], self.uploaded)
@@ -123,7 +127,7 @@ class PostFormTests(TestCase):
 
     def test_comment_added_to_post(self):
         """Комментарий появляется на странице поста."""
-        comments_count = Comment.objects.count()
+        comments_count = set(Comment.objects.values_list('id', flat=True))
         comment_form = {
             'text': 'Тестовый текс коментария'
         }
@@ -135,13 +139,23 @@ class PostFormTests(TestCase):
             data=comment_form,
             follow=True
         )
-        self.assertEqual(Comment.objects.count(), comments_count + 1)
-        self.assertTrue(
-            Comment.objects.filter(
-                text=comment_form['text'],
-                author=self.user
-            )
+        new_comments_collection = set(
+            Comment.objects.values_list('id',
+                                        flat=True
+                                        )
         )
+        new_ids_collection = new_comments_collection.difference(
+            comments_count
+        )
+        self.assertEqual(
+            len(new_ids_collection),
+            1
+        )
+        post = Comment.objects.get(
+            id=new_ids_collection.pop())
+        self.assertEqual(comment_form['text'], post.text)
+        self.assertEqual(self.user, post.author)
+        self.assertEqual(self.post.id, post.post.id)
         self.assertRedirects(
             response,
             reverse(

@@ -1,11 +1,9 @@
-# from math import ceil
-import shutil
-import tempfile
+from math import ceil
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, TestCase, override_settings
+from django.test import Client, TestCase
 from django.urls import reverse
 from django.core.cache import cache
 
@@ -13,15 +11,12 @@ from posts.models import Group, Post, Follow, User
 from posts.forms import PostForm
 
 User = get_user_model()
-TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
-@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class URLTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
         small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
             b'\x01\x00\x80\x00\x00\x00\x00\x00'
@@ -36,7 +31,10 @@ class URLTests(TestCase):
             content_type='image/gif'
         )
         cls.user = User.objects.create(
-            username='tester_views',
+            username='test',
+        )
+        cls.user_follower = User.objects.create_user(
+            username='Follower'
         )
         cls.group = Group.objects.create(
             title='Тестовая группа',
@@ -49,16 +47,15 @@ class URLTests(TestCase):
             group=cls.group,
             image=uploaded,
         )
-
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+        Follow.objects.create(
+            author=cls.user,
+            user=cls.user_follower
+        )
 
     def setUp(self):
         self.guest_client = Client()
         self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
+        self.authorized_client.force_login(URLTests.user)
 
     def posts_check(self, post):
         """Проверка полей поста."""
@@ -70,18 +67,19 @@ class URLTests(TestCase):
 
     def test_pages_show_correct_context(self):
         """Шаблон index, group, profile сформирован с правильным контекстом."""
-        templates_pages_names = [
+        pages_names = [
             reverse('posts:index'),
             reverse(
                 'posts:group_list', kwargs={'slug': self.group.slug}),
             reverse(
                 'posts:profile', kwargs={'username': self.post.author.username}
             ),
+            reverse('posts:follow_index'),
         ]
-        for template in templates_pages_names:
-            with self.subTest(template=template):
-                response = self.authorized_client.get(template)
-                self.posts_check(response.context['page_obj'][0])
+        for url in pages_names:
+            self.authorized_client.force_login(self.user_follower)
+            response = self.authorized_client.get(url)
+            self.posts_check(response.context['page_obj'][0])
 
     def test_groups_profile_show_correct_context(self):
         """Шаблоны group_list, profile сформированs с правильным контекстом."""
@@ -149,136 +147,108 @@ class URLTests(TestCase):
         cache.clear()
         self.assertEqual(Post.objects.count(), settings.ZERO_POST)
 
-
-# Андрей помоги пожалуйста, ни как не могу разобраться с ошибкой
-
-# class PaginatorViewsTest(TestCase):
-#     @classmethod
-#     def setUpClass(cls):
-#         super().setUpClass()
-#         cls.POSTS_OF_PAGE: int = 13
-#         cls.user = User.objects.create_user(username='tester')
-#         cls.group = Group.objects.create(
-#             title='Тестовая группа',
-#             slug='test_slug',
-#             description='Тестовое описание',
-#         )
-#         cls.post = [
-#             Post.objects.bulk_create([
-#                 Post(
-#                     text='Тестовый текст' + str(post_plus),
-#                     group=cls.group,
-#                     author=cls.user,
-#                 ),
-#             ])
-#             for post_plus in range(cls.POSTS_OF_PAGE)
-#         ]
-#         cls.pages_names = (
-#             reverse('posts:index'),
-#             reverse(
-#                 'posts:profile',
-#                 kwargs={'username': cls.user}),
-#             reverse(
-#                 'posts:group_list',
-#                 kwargs={'slug': cls.group.slug})
-#         )
-
-#     def setUp(self):
-#         self.guest_client = Client()
-
-#     def test_first_page_contains_ten_posts(self):
-#         """Тестирование первой страницы паджинатора"""
-#         for url in self.pages_names:
-#             response = self.guest_client.get(url)
-#             self.assertEqual(
-#                 len(response.context['page_obj']),
-#                 settings.COUNT
-#             )
-
-#     def test_last_page_contains_three_records(self):
-#         '''Паджинатор переносит остальные записи на след стр'''
-#         page_number = ceil(self.POSTS_OF_PAGE / settings.COUNT)
-#         for url in self.pages_names:
-#             response = self.guest_client.get(
-#                 url + '?page=' + str(page_number)
-#             )
-#             self.assertEqual(
-#                 len(response.context['page_obj']),
-#                 (self.POSTS_OF_PAGE - (
-#                     page_number - 1
-#                 ) * settings.COUNT)
-#             )
-
-
-class FollowViewsTest(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.user_author = User.objects.create(
-            username='auth_author',
-        )
-        cls.user_follow = User.objects.create(
-            username='auth_follow',
-        )
-        cls.post = Post.objects.create(
-            text='Тестовый текст',
-            author=cls.user_author,
-        )
-
-    def setUp(self):
-        cache.clear()
-        self.author_client = Client()
-        self.author_client.force_login(self.user_follow)
-        self.follow_client = Client()
-        self.follow_client.force_login(self.user_author)
-
-    def test_follow(self):
+    def test_user_follow(self):
         """Тест подписки"""
-        follow_count = Follow.objects.count()
-        response = self.follow_client.get(
-            reverse(
-                'posts:profile_follow',
-                kwargs={'username': self.user_follow}
-            )
+        url = reverse(
+            'posts:profile_follow', kwargs={
+                'username': self.user.username
+            }
         )
-        self.assertEqual(Follow.objects.count(), follow_count + 1)
+        self.authorized_client.force_login(self.user_follower)
+        response = self.authorized_client.get(url, follow=True)
         self.assertRedirects(
-            response,
-            reverse(
-                'posts:profile',
-                kwargs={'username': self.user_follow}
+            response, reverse(
+                'posts:profile', kwargs={'username': self.user.username}
             )
         )
         self.assertTrue(
             Follow.objects.filter(
-                user=self.user_author, author=self.user_follow
+                user=self.user_follower, author=self.user
             ).exists()
         )
 
-    def test_posts_on_followers(self):
-        """Проверка оотписки."""
-        post = Post.objects.create(
-            author=self.user_author,
-            text='Тестовый текст'
+    def test_user_unfollow(self):
+        """Тест отписки"""
+        url = reverse(
+            'posts:profile_unfollow', kwargs={
+                'username': self.user.username
+            }
         )
-        Follow.objects.create(
-            user=self.user_follow,
-            author=self.user_author
+        self.authorized_client.force_login(self.user_follower)
+        response = self.authorized_client.get(url, follow=True)
+        self.assertRedirects(
+            response, reverse(
+                'posts:profile', kwargs={'username': self.user.username}
+            )
         )
-        response = self.author_client.get(
-            reverse('posts:follow_index')
+        self.assertFalse(
+            Follow.objects.filter(
+                user=self.user_follower, author=self.user
+            ).exists()
         )
-        post_object = response.context['page_obj']
-        self.assertIn(post, post_object)
 
-    def test_posts_on_unfollowers(self):
-        """Проверка записей у тех кто не подписан на авторов."""
-        post = Post.objects.create(
-            author=self.user_author,
-            text='Тестовый текст'
-        )
-        response = self.author_client.get(
+    def test_new_post_in_page_follower_only(self):
+        """Запись появляется только для подписчиков"""
+        response = self.authorized_client.get(
             reverse('posts:follow_index')
         )
-        post_object = response.context['page_obj']
-        self.assertNotIn(post, post_object)
+        first_object = response.context['page_obj']
+        self.assertNotIn(self.post, first_object)
+
+
+class PaginatorViewsTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.POSTS_OF_PAGE: int = 13
+        cls.user = User.objects.create_user(username='test_pagint')
+        cls.group = Group.objects.create(
+            title='Тестовая группа',
+            slug='test_paginator',
+            description='Тестовое описание',
+        )
+        cls.post = [
+            Post.objects.bulk_create([
+                Post(
+                    text='Тестовый текст' + str(post_plus),
+                    group=cls.group,
+                    author=cls.user,
+                ),
+            ])
+            for post_plus in range(cls.POSTS_OF_PAGE)
+        ]
+        cls.pages_names = (
+            reverse('posts:index'),
+            reverse(
+                'posts:profile',
+                kwargs={'username': cls.user}),
+            reverse(
+                'posts:group_list',
+                kwargs={'slug': cls.group.slug})
+        )
+
+    def setUp(self):
+        self.guest_client = Client()
+
+    def test_first_page_contains_ten_posts(self):
+        """Тестирование первой страницы паджинатора"""
+        for url in self.pages_names:
+            response = self.guest_client.get(url)
+            self.assertEqual(
+                len(response.context['page_obj']),
+                settings.COUNT
+            )
+
+    def test_last_page_contains_three_records(self):
+        '''Паджинатор переносит остальные записи на след стр'''
+        page_number = ceil(self.POSTS_OF_PAGE / settings.COUNT)
+        for url in self.pages_names:
+            response = self.guest_client.get(
+                url + '?page=' + str(page_number)
+            )
+            self.assertEqual(
+                len(response.context['page_obj']),
+                (self.POSTS_OF_PAGE - (
+                    page_number - 1
+                ) * settings.COUNT)
+            )

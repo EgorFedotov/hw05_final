@@ -1,5 +1,5 @@
 {% extends 'base.html' %} 
-{% block title %}Профайл пользователя {{ post.author.get_full_name }} {% endblock %} 
+{% block title %} {{ post|truncatechars:30 }} {% endblock %} 
 {% block content %}
 {% load thumbnail %}
 {% load user_filters %}

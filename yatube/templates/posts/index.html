@@ -2,10 +2,13 @@
 {% block title %}Последние обновления на сайте{% endblock %}
 {% block content %}
 {% include 'posts/includes/switcher.html' %}
-  <h1>Последние обновления на сайте</h1>
-    {% for post in page_obj %}
-      {% include 'posts/includes/post.html' with index_link='True' %}
-      {% if not forloop.last %}<hr>{% endif %}
-    {% endfor %}
-  {% include 'posts/includes/paginator.html' %}
+{% load cache %}
+  {% cache 20 posts request.path page_obj.number %}
+    <h1>Последние обновления на сайте</h1>
+      {% for post in page_obj %}
+        {% include 'posts/includes/post.html' with index_link='True' group_list_link='True' %}
+        {% if not forloop.last %}<hr>{% endif %}
+      {% endfor %}
+  {% endcache %}
+{% include 'posts/includes/paginator.html' %}
 {% endblock %}

@@ -39,12 +39,29 @@ class PostsURLTests(TestCase):
         """URL-адрес ответ статуса страниц для
         неавторизированного/авторизированного пользователя."""
         list_of_slug = [
-            ('/', HTTPStatus.OK, False),
-            (f'/group/{self.group.slug}/', HTTPStatus.OK, False),
-            (f'/profile/{self.user.username}/', HTTPStatus.OK, False),
-            (f'/posts/{self.post.id}/', HTTPStatus.OK, False),
-            ('/create/', HTTPStatus.OK, True),
-            (f'/posts/{self.post.id}/edit/', HTTPStatus.OK, True),
+            (reverse('posts:index'), HTTPStatus.OK, False),
+            (reverse(
+                'posts:group_list',
+                kwargs={'slug': self.post.group.slug}
+            ),
+                HTTPStatus.OK, False),
+            (reverse(
+                'posts:profile',
+                kwargs={'username': self.post.author.username}
+            ),
+                HTTPStatus.OK, False),
+            (reverse(
+                'posts:post_detail',
+                kwargs={'post_id': self.post.id}
+            ),
+                HTTPStatus.OK, False),
+            (reverse('posts:post_create'), HTTPStatus.OK, True),
+            (reverse(
+                'posts:post_edit',
+                kwargs={'post_id': self.post.id}
+            ),
+                HTTPStatus.OK, True),
+            (reverse('posts:follow_index'), HTTPStatus.OK, True),
             ('/unexisting_page/', HTTPStatus.NOT_FOUND, False),
         ]
         for url, status_code, flag in list_of_slug:
@@ -105,7 +122,8 @@ class PostsURLTests(TestCase):
             (reverse(
                 'posts:post_edit',
                 kwargs={'post_id': self.post.id}), 'posts/create_post.html'),
-            (reverse('posts:post_create'), 'posts/create_post.html')
+            (reverse('posts:post_create'), 'posts/create_post.html'),
+            (reverse('posts:follow_index'), 'posts/follow.html'),
         ]
         for reverse_name, template in templates_url_names:
             with self.subTest(reverse_name=reverse_name):

@@ -5,6 +5,7 @@ User = get_user_model()
 
 
 class Post(models.Model):
+    COUNT_OF_CHARACTERS: int = 15
     text = models.TextField(
         verbose_name='Текст поста',
         help_text='Введите текст поста',
@@ -35,7 +36,6 @@ class Post(models.Model):
         upload_to='posts/',
         blank=True,
     )
-    COUNT_OF_CHARACTERS: int = 15
 
     class Meta:
         ordering = ('-pub_date',)
@@ -43,7 +43,7 @@ class Post(models.Model):
         verbose_name = 'Пост'
 
     def __str__(self):
-        return self.text[:15]
+        return self.text[:self.COUNT_OF_CHARACTERS]
 
 
 class Group(models.Model):
@@ -77,7 +77,7 @@ class Comment(models.Model):
         on_delete=models.CASCADE,
         related_name='comments'
     )
-    pub_date = models.DateTimeField(
+    created = models.DateTimeField(
         auto_now_add=True,
     )
     author = models.ForeignKey(
