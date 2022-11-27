@@ -35,6 +35,41 @@ class PostsURLTests(TestCase):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
+    def test_conformity_urls_and_reverse(self):
+        """Тест соответствия фактических адресов с их reverse"""
+        test_pages = [
+            ('/', reverse('posts:index')),
+            (f'/group/{self.post.group.slug}/',
+                (reverse('posts:group_list',
+                         kwargs={'slug': self.post.group.slug}
+                         )
+                 ),
+             ),
+            (f'/profile/{self.post.author.username}/',
+                (reverse('posts:profile',
+                         kwargs={'username': self.post.author.username}
+                         )
+                 ),
+             ),
+            (f'/posts/{self.post.id}/edit/',
+                (reverse('posts:post_edit',
+                         kwargs={'post_id': self.post.id}
+                         )
+                 ),
+             ),
+            (f'/posts/{self.post.id}/',
+                (reverse('posts:post_detail',
+                         kwargs={'post_id': self.post.id}
+                         )
+                 ),
+             ),
+            ('/create/', reverse('posts:post_create'),),
+            ('/follow/', reverse('posts:follow_index'),),
+        ]
+        for url, revers_name in test_pages:
+            with self.subTest(url=url):
+                self.assertEqual(url, revers_name)
+
     def test_urls_response_staus_code(self):
         """URL-адрес ответ статуса страниц для
         неавторизированного/авторизированного пользователя."""

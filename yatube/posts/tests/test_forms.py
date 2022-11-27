@@ -151,11 +151,11 @@ class PostFormTests(TestCase):
             len(new_ids_collection),
             1
         )
-        post = Comment.objects.get(
+        post_comment = Comment.objects.get(
             id=new_ids_collection.pop())
-        self.assertEqual(comment_form['text'], post.text)
-        self.assertEqual(self.user, post.author)
-        self.assertEqual(self.post.id, post.post.id)
+        self.assertEqual(comment_form['text'], post_comment.text)
+        self.assertEqual(self.user, post_comment.author)
+        self.assertEqual(self.post.id, post_comment.post.id)
         self.assertRedirects(
             response,
             reverse(
