@@ -1,3 +1,43 @@
-# hw05_final
 
-[![CI](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml)
+# Соцсеть Yatube
+***
+Социальная сеть, в которой можно зарегистрироваться и авторизоваться. Каждый пользователь может свои посты добавлять, редактировать и удалять. Так же можно подписаться на интересующего автора и комментировать его посты
+
+
+## Стек
+***
+Python3 Django
+
+## Инструкции по установи
+***
+* Клонируем репозиторий
+
+	
+	git clone git@github.com:EgorFedotov/hw05_final.git
+	
+
+
+* Устанавливаем и активируем виртуальное окружение  
+
+	
+    py -3.7 -m venv venv
+    
+   
+   
+* Устанавливаем зависимости из файла requirements.txt
+ 
+	
+    pip install -r requirements.txt
+    
+ 
+
+* В папке с manage.py выполняем миграции 
+
+
+	
+    python manage.py migrate
+	
+* запускаем сервер 
+
+
+	python manage.py runserver
