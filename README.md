@@ -12,32 +12,34 @@ Python3 Django
 ***
 * Клонируем репозиторий
 
-	
+	`
 	git clone git@github.com:EgorFedotov/hw05_final.git
-	
+	`
 
 
 * Устанавливаем и активируем виртуальное окружение  
 
-	
+	`
     py -3.7 -m venv venv
-    
+    `
    
    
 * Устанавливаем зависимости из файла requirements.txt
  
-	
+	`
     pip install -r requirements.txt
-    
+    `
  
 
 * В папке с manage.py выполняем миграции 
 
-
-	
+	`
     python manage.py migrate
-	
+	`
+
+
 * запускаем сервер 
 
-
+    `
 	python manage.py runserver
+    `
